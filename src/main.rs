@@ -5,6 +5,9 @@ use winit::{
     window::WindowBuilder,
 };
 
+#[path = "util/fill.rs"]
+mod fill;
+
 fn main() -> Result<(), impl std::error::Error> {
     SimpleLogger::new().init().unwrap();
 
@@ -28,11 +31,15 @@ fn main() -> Result<(), impl std::error::Error> {
                     device_id,
                     event,
                     is_synthetic,
-                } => todo!(),
+                } => window.request_redraw(),
                 _ => (),
             },
 
             Event::RedrawRequested(_) => {
+                //notify windowing system that we'll be presenting to the window
+                window.pre_present_notify();
+                fill::fill_window(&window);
+
                 println!("redrawing");
             }
             _ => (),
