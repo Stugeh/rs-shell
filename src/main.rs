@@ -1,9 +1,10 @@
-use std::num::NonZeroU32;
+use core::time;
+use std::{num::NonZeroU32, thread};
 
 use simple_logger::SimpleLogger;
 use winit::{
-    event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
+    event::{ElementState, Event, KeyEvent, WindowEvent},
+    event_loop::EventLoop,
     window::WindowBuilder,
 };
 
@@ -20,20 +21,20 @@ fn main() -> Result<(), impl std::error::Error> {
     let context = unsafe { softbuffer::Context::new(&window) }.unwrap();
     let mut surface = unsafe { softbuffer::Surface::new(&context, &window) }.unwrap();
 
+    let mut input_buffer = String::new();
+
     // elwt == event loop window target
     event_loop.run(move |event, _, control_flow| {
         // Poll continuously
         control_flow.set_wait();
-        println!("{event:?}");
 
         match event {
             Event::WindowEvent { event, window_id } if window_id == window.id() => match event {
                 WindowEvent::CloseRequested => control_flow.set_exit(),
-                WindowEvent::KeyboardInput {
-                    device_id,
-                    event,
-                    is_synthetic,
-                } => window.request_redraw(),
+                WindowEvent::KeyboardInput { event, .. } => {
+                    handle_key_press(&mut input_buffer, event)
+                }
+
                 _ => (),
             },
 
@@ -61,4 +62,14 @@ fn main() -> Result<(), impl std::error::Error> {
             _ => (),
         };
     })
+}
+
+fn handle_key_press(input_buffer: &mut String, event: KeyEvent) {
+    if event.state.is_pressed() {
+        if let Some(text) = event.text {
+            input_buffer.push_str(text.as_str());
+            println!("pressed: {}", text);
+            println!("input buffer: {}", input_buffer);
+        }
+    }
 }
