@@ -1,9 +1,8 @@
-use core::time;
-use std::{num::NonZeroU32, thread};
+use std::num::NonZeroU32;
 
 use simple_logger::SimpleLogger;
 use winit::{
-    event::{ElementState, Event, KeyEvent, WindowEvent},
+    event::{Event, KeyEvent, WindowEvent},
     event_loop::EventLoop,
     window::WindowBuilder,
 };
