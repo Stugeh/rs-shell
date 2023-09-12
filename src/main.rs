@@ -10,7 +10,7 @@ use winit::{
     window::{WindowBuilder, Window},
 };
 
-
+static mut COLOR:u32 = 0xFFFFFF;
 fn main() -> Result<(), impl std::error::Error> {
     SimpleLogger::new().init().unwrap();
 
@@ -29,7 +29,7 @@ fn main() -> Result<(), impl std::error::Error> {
     let mut input_buffer = String::new();
 
     event_loop.run(move |event, _, control_flow| {
-        // Poll continuously
+        // Run loop only when there are events happening
         control_flow.set_wait();
 
         match event {
@@ -61,8 +61,7 @@ fn main() -> Result<(), impl std::error::Error> {
 
                 buffer.fill(0x00181818);
 
-                (0..100).for_each(|i| { draw_glyph(&'a', &glyphs, &mut buffer, &window)});
-
+                draw_glyph(&'a', &glyphs, &mut buffer, &window);
                 buffer.present().unwrap();
                 println!("redrawing");
             }
@@ -77,10 +76,11 @@ fn draw_glyph(ch: &char, glyphs: &HashMap<char, Glyph>, output_buffer: &mut soft
 
     for (index,byte) in glyph.glyph_bytes.iter().enumerate() {
         if *byte > 0{
-            let buffer_index: usize = window.inner_size().width as usize*row_offset as usize + index;
+            let buffer_index: usize = window.inner_size().width as usize*row_offset as usize + index +glyph.metrics.width*row_offset;
             output_buffer[buffer_index] = 0xFFFFFF;
 
         }
+        unsafe { COLOR-=1 };
         if index % glyph.metrics.width == 0 {row_offset += 1;}
     }
     
