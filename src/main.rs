@@ -10,6 +10,7 @@ use winit::{
     window::{WindowBuilder, Window},
 };
 
+//***TODO FIX draw glyph math. Dont redraw everything every time theres an event, add positioning to glyphs***//
 static mut COLOR:u32 = 0xFFFFFF;
 fn main() -> Result<(), impl std::error::Error> {
     SimpleLogger::new().init().unwrap();
