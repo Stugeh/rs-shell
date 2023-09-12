@@ -1,12 +1,13 @@
 pub mod font_loader;
 
-use std::num::NonZeroU32;
+use std::{num::NonZeroU32, collections::HashMap};
 
+use font_loader::font_loader::Glyph;
 use simple_logger::SimpleLogger;
 use winit::{
     event::{Event, KeyEvent, WindowEvent},
     event_loop::EventLoop,
-    window::WindowBuilder,
+    window::{WindowBuilder, Window},
 };
 
 
@@ -60,9 +61,7 @@ fn main() -> Result<(), impl std::error::Error> {
 
                 buffer.fill(0x00181818);
 
-                (0..100).for_each(|i| {
-                    buffer[i]=0xFFFFFF;
-                });
+                (0..100).for_each(|i| { draw_glyph(&'a', &glyphs, &mut buffer, &window)});
 
                 buffer.present().unwrap();
                 println!("redrawing");
@@ -70,6 +69,21 @@ fn main() -> Result<(), impl std::error::Error> {
             _ => (),
         };
     })
+}
+
+fn draw_glyph(ch: &char, glyphs: &HashMap<char, Glyph>, output_buffer: &mut softbuffer::Buffer, window: &Window){
+    let  glyph = glyphs.get(ch).expect("missing glyph");
+    let mut row_offset = 0;
+
+    for (index,byte) in glyph.glyph_bytes.iter().enumerate() {
+        if *byte > 0{
+            let buffer_index: usize = window.inner_size().width as usize*row_offset as usize + index;
+            output_buffer[buffer_index] = 0xFFFFFF;
+
+        }
+        if index % glyph.metrics.width == 0 {row_offset += 1;}
+    }
+    
 }
 
 

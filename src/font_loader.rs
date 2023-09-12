@@ -4,8 +4,8 @@ pub mod font_loader{
 
 
     pub struct Glyph{
-        metrics: Metrics,
-        glyph_bytes: Vec<u8>
+        pub metrics: Metrics,
+        pub glyph_bytes: Vec<u8>
     }
 
 
