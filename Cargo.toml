@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 winit = "0.29.1-beta"
 simple_logger = "4.2.0"
+fontdue = "0.7.3"
 softbuffer = "0.3.1"
