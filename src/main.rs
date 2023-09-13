@@ -11,7 +11,6 @@ use winit::{
 };
 
 //***TODO FIX draw glyph math. Dont redraw everything every time theres an event, add positioning to glyphs***//
-static mut COLOR:u32 = 0xFFFFFF;
 fn main() -> Result<(), impl std::error::Error> {
     SimpleLogger::new().init().unwrap();
 
@@ -71,20 +70,22 @@ fn main() -> Result<(), impl std::error::Error> {
     })
 }
 
+// TODO Make more efficient
 fn draw_glyph(ch: &char, glyphs: &HashMap<char, Glyph>, output_buffer: &mut softbuffer::Buffer, window: &Window){
     let  glyph = glyphs.get(ch).expect("missing glyph");
     let mut row_offset = 0;
 
+    let window_width = window.inner_size().width as usize;
+
     for (index,byte) in glyph.glyph_bytes.iter().enumerate() {
         if *byte > 0{
-            let buffer_index: usize = window.inner_size().width as usize*row_offset as usize + index +glyph.metrics.width*row_offset;
-            output_buffer[buffer_index] = 0xFFFFFF;
+            let buffer_index: usize = index + window_width*row_offset - glyph.metrics.width * row_offset;
 
+            // Color format: 0000 0000 RRRR RRRR GGGG GGGG BBBB BBBB
+            output_buffer[buffer_index] = *byte as u32| (( *byte as u32 ) << 8)| (( *byte as u32 ) << 16);
         }
-        unsafe { COLOR-=1 };
-        if index % glyph.metrics.width == 0 {row_offset += 1;}
+        if index>0 && index % glyph.metrics.width == 0 {row_offset += 1;}
     }
-    
 }
 
 
