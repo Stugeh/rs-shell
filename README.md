@@ -1,2 +1,2 @@
-# terminal-emulator
-Terminal emulator written in rust
+# rs shell
+Barebones shell written in rust
