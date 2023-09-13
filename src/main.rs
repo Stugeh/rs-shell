@@ -61,7 +61,7 @@ fn main() -> Result<(), impl std::error::Error> {
 
                 buffer.fill(0x00181818);
 
-                draw_glyph(&'a', &glyphs, &mut buffer, &window);
+                draw_string(&glyphs, &mut buffer, &window);
                 buffer.present().unwrap();
                 println!("redrawing");
             }
@@ -70,11 +70,20 @@ fn main() -> Result<(), impl std::error::Error> {
     })
 }
 
-// TODO Make more efficient
-fn draw_glyph(ch: &char, glyphs: &HashMap<char, Glyph>, output_buffer: &mut softbuffer::Buffer, window: &Window){
-    let  glyph = glyphs.get(ch).expect("missing glyph");
-    
-    let mut row_offset = 0;
+fn draw_string(glyphs: &HashMap<char, Glyph>, output_buffer: &mut softbuffer::Buffer, window: &Window){
+    let hello = String::from("Hello World!");
+    let mut offset = 0;
+
+    for ch in hello.chars(){
+        let current_glyph = glyphs.get(&ch).expect("invalid char");
+
+        draw_glyph(current_glyph, output_buffer, window, offset );
+        offset += current_glyph.metrics.width;
+    }
+}
+
+fn draw_glyph(glyph: &Glyph, output_buffer: &mut softbuffer::Buffer, window: &Window, mut row_offset: usize){
+    println!("{}", glyph.metrics.width);
 
     let glyph_width = glyph.metrics.width as usize;
     let window_width = window.inner_size().width as usize;
