@@ -17,12 +17,20 @@ pub mod font_loader{
 
         let chars=font.chars();
 
-        for (ch,_) in chars{ rasterized_glyphs.insert(*ch, create_new_glyph(font.rasterize(*ch, 128.0))); };
+        for (ch,_) in chars{ 
+            let (mut metrics, glyph_bytes) = font.rasterize(*ch, 128.0);
+            if *ch ==' ' {metrics.width = (128.0 / 2.0) as usize};
+            rasterized_glyphs.insert(*ch, create_new_glyph((metrics,glyph_bytes))); 
+        };
 
         rasterized_glyphs
     }
 
+    pub fn get_max_glyph_height(glyph_map:&HashMap<char,Glyph>)-> usize{
 
+        let tallest_glyph = glyph_map.values().max_by_key(|x| x.metrics.height).expect("getting tallest_glyph failed");
+        tallest_glyph.metrics.height
+    }
 
     fn create_new_glyph((metrics, glyph_bytes):(Metrics, Vec<u8>))-> Glyph{
         Glyph{
