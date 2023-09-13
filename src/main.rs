@@ -73,18 +73,26 @@ fn main() -> Result<(), impl std::error::Error> {
 // TODO Make more efficient
 fn draw_glyph(ch: &char, glyphs: &HashMap<char, Glyph>, output_buffer: &mut softbuffer::Buffer, window: &Window){
     let  glyph = glyphs.get(ch).expect("missing glyph");
+    
     let mut row_offset = 0;
 
+    let glyph_width = glyph.metrics.width as usize;
     let window_width = window.inner_size().width as usize;
 
     for (index,byte) in glyph.glyph_bytes.iter().enumerate() {
         if *byte > 0{
-            let buffer_index: usize = index + window_width*row_offset - glyph.metrics.width * row_offset;
+            let buffer_index = index + row_offset;
 
-            // Color format: 0000 0000 RRRR RRRR GGGG GGGG BBBB BBBB
-            output_buffer[buffer_index] = *byte as u32| (( *byte as u32 ) << 8)| (( *byte as u32 ) << 16);
+            if buffer_index < output_buffer.len() {
+                // Color format: 0000 0000 RRRR RRRR GGGG GGGG BBBB BBBB
+                output_buffer[buffer_index] = *byte as u32| (( *byte as u32 ) << 8)| (( *byte as u32 ) << 16);
+            }
         }
-        if index>0 && index % glyph.metrics.width == 0 {row_offset += 1;}
+
+        // Update offset when reaching end of glyph row
+        if index>0 && index % glyph_width == 0 {
+            row_offset += window_width - glyph_width;
+        }
     }
 }
 
