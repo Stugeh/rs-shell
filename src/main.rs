@@ -2,7 +2,7 @@ pub mod font_loader;
 
 use std::{collections::HashMap, num::NonZeroU32};
 
-use font_loader::{get_max_glyph_height, Glyph};
+use font_loader::Glyph;
 use simple_logger::SimpleLogger;
 use winit::{
     event::{Event, KeyEvent, WindowEvent},
@@ -35,8 +35,9 @@ fn main() -> Result<(), impl std::error::Error> {
             Event::WindowEvent { event, window_id } if window_id == window.id() => match event {
                 WindowEvent::CloseRequested => control_flow.set_exit(),
                 WindowEvent::KeyboardInput { event, .. } => {
-                    handle_key_press(&mut input_buffer, event);
-                    window.request_redraw();
+                    if handle_key_press(&mut input_buffer, event) {
+                        window.request_redraw();
+                    };
                 }
 
                 _ => (),
@@ -62,8 +63,8 @@ fn main() -> Result<(), impl std::error::Error> {
                 buffer.fill(0x00181818);
 
                 draw_string(&glyphs, &mut buffer, &window, &mut input_buffer);
+
                 buffer.present().unwrap();
-                println!("redrawing");
             }
             _ => (),
         };
@@ -116,10 +117,54 @@ fn draw_glyph(
     }
 }
 
-fn handle_key_press(input_buffer: &mut String, event: KeyEvent) {
+// Returns true if key event should trigger a re-render
+fn handle_key_press(input_buffer: &mut String, event: KeyEvent) -> bool {
     if event.state.is_pressed() {
-        if let Some(text) = event.text {
-            input_buffer.push_str(text.as_str());
-        }
+        return match event.logical_key {
+            winit::keyboard::Key::Alphanumeric => todo!(),
+            winit::keyboard::Key::Alt => todo!(),
+            winit::keyboard::Key::AltGraph => todo!(),
+            winit::keyboard::Key::Control => todo!(),
+            winit::keyboard::Key::Enter => {
+                send_input(input_buffer);
+                true
+            }
+            winit::keyboard::Key::Tab => todo!(),
+            winit::keyboard::Key::ArrowDown => todo!(),
+            winit::keyboard::Key::ArrowLeft => todo!(),
+            winit::keyboard::Key::ArrowRight => todo!(),
+            winit::keyboard::Key::ArrowUp => todo!(),
+            winit::keyboard::Key::Backspace => {
+                println!("popping");
+                println!("{input_buffer}");
+                input_buffer.pop();
+                true
+            }
+            winit::keyboard::Key::Clear => todo!(),
+            winit::keyboard::Key::Copy => todo!(),
+            winit::keyboard::Key::Cut => todo!(),
+            winit::keyboard::Key::Delete => todo!(),
+            winit::keyboard::Key::Insert => todo!(),
+            winit::keyboard::Key::Paste => todo!(),
+            winit::keyboard::Key::Redo => todo!(),
+            winit::keyboard::Key::Undo => todo!(),
+            winit::keyboard::Key::Escape => todo!(),
+            winit::keyboard::Key::Execute => todo!(),
+            _ => {
+                if let Some(text) = event.text {
+                    println!("{}", text);
+                    input_buffer.push_str(text.as_str());
+                    true
+                } else {
+                    false
+                }
+            }
+        };
     }
+
+    false
+}
+
+fn send_input(_input: &mut str) {
+    todo!()
 }
