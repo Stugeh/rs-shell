@@ -1,16 +1,15 @@
 pub mod font_loader;
 
-use std::{num::NonZeroU32, collections::HashMap};
+use std::{collections::HashMap, num::NonZeroU32};
 
-use font_loader::font_loader::Glyph;
+use font_loader::{get_max_glyph_height, Glyph};
 use simple_logger::SimpleLogger;
 use winit::{
     event::{Event, KeyEvent, WindowEvent},
     event_loop::EventLoop,
-    window::{WindowBuilder, Window},
+    window::{Window, WindowBuilder},
 };
 
-//***TODO FIX draw glyph math. Dont redraw everything every time theres an event, add positioning to glyphs***//
 fn main() -> Result<(), impl std::error::Error> {
     SimpleLogger::new().init().unwrap();
 
@@ -24,7 +23,7 @@ fn main() -> Result<(), impl std::error::Error> {
     let context = unsafe { softbuffer::Context::new(&window) }.unwrap();
     let mut surface = unsafe { softbuffer::Surface::new(&context, &window) }.unwrap();
 
-    let glyphs = font_loader::font_loader::get_glyph_table();
+    let glyphs = font_loader::get_glyph_table();
 
     let mut input_buffer = String::new();
 
@@ -36,7 +35,8 @@ fn main() -> Result<(), impl std::error::Error> {
             Event::WindowEvent { event, window_id } if window_id == window.id() => match event {
                 WindowEvent::CloseRequested => control_flow.set_exit(),
                 WindowEvent::KeyboardInput { event, .. } => {
-                    handle_key_press(&mut input_buffer, event)
+                    handle_key_press(&mut input_buffer, event);
+                    window.request_redraw();
                 }
 
                 _ => (),
@@ -61,7 +61,7 @@ fn main() -> Result<(), impl std::error::Error> {
 
                 buffer.fill(0x00181818);
 
-                draw_string(&glyphs, &mut buffer, &window);
+                draw_string(&glyphs, &mut buffer, &window, &mut input_buffer);
                 buffer.present().unwrap();
                 println!("redrawing");
             }
@@ -70,48 +70,56 @@ fn main() -> Result<(), impl std::error::Error> {
     })
 }
 
-fn draw_string(glyphs: &HashMap<char, Glyph>, output_buffer: &mut softbuffer::Buffer, window: &Window){
-    let hello = String::from("Hello World!");
+fn draw_string(
+    glyphs: &HashMap<char, Glyph>,
+    output_buffer: &mut softbuffer::Buffer,
+    window: &Window,
+    input_buffer: &mut str,
+) {
     let mut offset = 0;
+    let max_glyph_height = font_loader::get_max_glyph_height(glyphs);
 
-    for ch in hello.chars(){
-        let current_glyph = glyphs.get(&ch).expect("invalid char");
-
-        draw_glyph(current_glyph, output_buffer, window, offset );
-        offset += current_glyph.metrics.width;
+    for ch in input_buffer.chars() {
+        if let Some(glyph) = glyphs.get(&ch) {
+            draw_glyph(glyph, output_buffer, window, offset, max_glyph_height);
+            offset += glyph.metrics.width;
+        }
     }
 }
 
-fn draw_glyph(glyph: &Glyph, output_buffer: &mut softbuffer::Buffer, window: &Window, mut row_offset: usize){
-    println!("{}", glyph.metrics.width);
-
-    let glyph_width = glyph.metrics.width as usize;
+fn draw_glyph(
+    glyph: &Glyph,
+    output_buffer: &mut softbuffer::Buffer,
+    window: &Window,
+    mut row_offset: usize,
+    max_glyph_height: usize,
+) {
+    let glyph_width = glyph.metrics.width;
     let window_width = window.inner_size().width as usize;
+    row_offset += window_width * (max_glyph_height - glyph.metrics.height);
 
-    for (index,byte) in glyph.glyph_bytes.iter().enumerate() {
-        if *byte > 0{
+    for (index, byte) in glyph.glyph_bytes.iter().enumerate() {
+        if *byte > 0 {
             let buffer_index = index + row_offset;
 
             if buffer_index < output_buffer.len() {
                 // Color format: 0000 0000 RRRR RRRR GGGG GGGG BBBB BBBB
-                output_buffer[buffer_index] = *byte as u32| (( *byte as u32 ) << 8)| (( *byte as u32 ) << 16);
+                output_buffer[buffer_index] =
+                    *byte as u32 | ((*byte as u32) << 8) | ((*byte as u32) << 16);
             }
         }
 
         // Update offset when reaching end of glyph row
-        if index>0 && index % glyph_width == 0 {
+        if index > 0 && index % glyph_width == 0 {
             row_offset += window_width - glyph_width;
         }
     }
 }
 
-
 fn handle_key_press(input_buffer: &mut String, event: KeyEvent) {
     if event.state.is_pressed() {
         if let Some(text) = event.text {
             input_buffer.push_str(text.as_str());
-            println!("pressed: {}", text);
-            println!("input buffer: {}", input_buffer);
         }
     }
 }
