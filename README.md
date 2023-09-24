@@ -1,2 +1,2 @@
 # rs shell
-Barebones shell written in rust
+Very unfinished, but the text rendering logic is kind of neat.
